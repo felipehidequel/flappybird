@@ -35,7 +35,7 @@ class Passaro:
         self.imagem = self.IMGS[0]
 
     def pular(self):
-        self.velocidade = -10.5
+        self.velocidade = -10
         self.tempo = 0
         self.altura = self.y
 
@@ -82,12 +82,12 @@ class Passaro:
 
         #desenhar a imagem
         imagem_rotacionada = pygame.transform.rotate(self.imagem, self.angulo)
-        pos_centro_imagem = self.imagem.get_rect(topleft=(self.x, self.y))
+        pos_centro_imagem = self.imagem.get_rect(topleft=(self.x, self.y)).center
         retangulo = imagem_rotacionada.get_rect(center=pos_centro_imagem)
         tela.blit(imagem_rotacionada, retangulo.topleft)
     # colisões   
     def get_mask(self):
-        pygame.mask.from_surface(self.imagem)
+        return pygame.mask.from_surface(self.imagem)
 
 class Cano:
     DISTANCIA = 200
@@ -98,8 +98,8 @@ class Cano:
         self.altura = 0
         self.pos_topo = 0
         self.pos_base = 0
-        self.CANO_TOPO = pygame.transform.flip(IMAGEM_CANO, False, True)
-        self.CANO_BASE = IMAGEM_CANO
+        self.CANO_TOPO = IMAGEM_CANO
+        self.CANO_BASE = pygame.transform.flip(IMAGEM_CANO, False, True)
         self.passou = False
         self.definir_altura()
 
@@ -131,7 +131,7 @@ class Cano:
         else:
             return False
             
-class chao:
+class Chao:
     VELOCIDADE = 5
     LARGURA = IMAGEM_CHAO.get_width()
     IMAGEM = IMAGEM_CHAO
@@ -146,9 +146,9 @@ class chao:
         self.x2 -= self.VELOCIDADE
         
         if self.x1 + self.LARGURA < 0:
-            self.x1 = self.x1 + self.LARGURA
+            self.x1 = self.x2 + self.LARGURA
         if self.x2 + self.LARGURA < 0:
-            self.x2 = self.x2 + self.LARGURA
+            self.x2 = self.x1 + self.LARGURA
     
     def desenhar(self, tela):
         tela.blit(self.IMAGEM, (self.x1, self.y))
@@ -162,6 +162,64 @@ def desenhar_tela(tela, passaros, canos, chao, pontos):
         cano.desenhar(tela)
     
     texto = FONTE_PONTOS.render(f"Pontuação: {pontos}", 1, (255,255,255))
-    tela.blit(texto, (TELA_LARGURA - 10 - texto.get_width), 10)
+    tela.blit(texto, (TELA_LARGURA - 10 - texto.get_width(), 10))
     chao.desenhar(tela)
     pygame.display.update()
+    
+def main():
+    passaros = [Passaro(230, 350)]
+    chao = Chao(650)
+    canos = [Cano(700)]
+    tela = pygame.display.set_mode((TELA_LARGURA, TELA_ALTURA))
+    pontos = 0
+    relogio = pygame.time.Clock()
+    
+    rodando = True
+    while True:
+        relogio.tick(30)
+        
+        # iteração com o usuario
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                rodando = False
+                pygame.quit()
+                quit()
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_SPACE:
+                    for passaro in passaros:
+                        passaro.pular()
+                   
+        # mover as coisas            
+        for passaro in passaros:
+            passaro.mover()
+        chao.mover()
+        
+        adicionar_cano = False
+        remover_canos = []
+        for cano in canos:
+            for i, passaro in enumerate(passaros):
+                if cano.colidir(passaro):
+                    passaros.pop(i)
+                if not cano.passou and passaro.x > cano.x:
+                    cano.passou = True
+                    adicionar_cano = True
+                cano.mover()
+                if cano.x + cano.CANO_TOPO.get_width() < 0:
+                    remover_canos.append(cano)
+        
+        if adicionar_cano:
+            pontos += 1
+            canos.append(Cano(600))
+        
+        for cano in remover_canos:
+            canos.remove(cano)
+        
+        passaro_colide_chao = (passaro.y + passaro.imagem.get_height()) > chao.y
+        for i, passaro in  enumerate(passaros):
+            if passaro_colide_chao or passaro.y < 0:
+                passaros.pop(i)
+                    
+        desenhar_tela(tela, passaros, canos, chao, pontos)
+    
+if __name__ == '__main__':
+    main()
