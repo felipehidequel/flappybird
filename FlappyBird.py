@@ -175,7 +175,7 @@ def main():
     relogio = pygame.time.Clock()
     
     rodando = True
-    while True:
+    while rodando:
         relogio.tick(30)
         
         # iteração com o usuario
