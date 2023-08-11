@@ -1,6 +1,11 @@
 import pygame
 import os
 import random
+import neat
+
+#variaveis gloabis NEAT
+ai_jogando = True
+geracao = 0
 
 TELA_LARGURA = 500
 TELA_ALTURA = 800
@@ -15,7 +20,7 @@ IMAGENS_PASSARO = [
 ]
 
 pygame.font.init()
-FONTE_PONTOS = pygame.font.SysFont('arial', 50)
+FONTE_PONTOS = pygame.font.SysFont('arial', 25)
 
 class Passaro:
     IMGS = IMAGENS_PASSARO
@@ -163,6 +168,11 @@ def desenhar_tela(tela, passaros, canos, chao, pontos):
     
     texto = FONTE_PONTOS.render(f"Pontuação: {pontos}", 1, (255,255,255))
     tela.blit(texto, (TELA_LARGURA - 10 - texto.get_width(), 10))
+    
+    if ai_jogando:
+        texto = FONTE_PONTOS.render(f"Geração: {geracao}", 1, (255,255,255))
+        tela.blit(texto, (10, 10))
+    
     chao.desenhar(tela)
     pygame.display.update()
     
